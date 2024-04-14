@@ -1,0 +1,104 @@
+docker tag local-image:tagname new-repo:tagname
+docker push new-repo:tagname
+
+{
+    "family": "BackendTaskDef",
+    "containerDefinitions": [
+        {
+            "name": "backend",
+            "image": "docker.io/dbornerpwr/p_w_ch:backend",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "backend-3000-tcp",
+                    "containerPort": 3000,
+                    "hostPort": 3000,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "/ecs/BackendTaskDef",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::533267079357:role/LabRole",
+    "executionRoleArn": "arn:aws:iam::533267079357:role/LabRole",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    }
+}
+
+{
+    "family": "FrontendTaskDef",
+    "containerDefinitions": [
+        {
+            "name": "frontend",
+            "image": "docker.io/dbornerpwr/p_w_ch:frontend",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "frontend-8080-tcp",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "/ecs/FrontendTaskDef",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::533267079357:role/LabRole",
+    "executionRoleArn": "arn:aws:iam::533267079357:role/LabRole",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    }
+}
+
+docker build -t frontend .
+docker tag frontend dbornerpwr/p_w_ch:frontend
+docker push dbornerpwr/p_w_ch:frontend
