@@ -53,10 +53,12 @@ resource "aws_route_table_association" "pub_rt_association" {
   route_table_id = aws_route_table.pub_rt.id
 }
 
+# Create backend ECS cluster
 resource "aws_ecs_cluster" "backend_cluster" {
   name = "backend-cluster"
 }
 
+# Create a task definition for the backend service
 resource "aws_ecs_task_definition" "backend_task" {
   family                   = "BackendTaskDef"
   network_mode             = "awsvpc"
@@ -97,6 +99,7 @@ resource "aws_ecs_task_definition" "backend_task" {
   }
 }
 
+# Create a security group for the backend service
 resource "aws_security_group" "backend_sg" {
   name        = "backend-sg"
   description = "Allow TCP 8080 for backend"
@@ -117,6 +120,7 @@ resource "aws_security_group" "backend_sg" {
   }
 }
 
+# Create backend ECS service
 resource "aws_ecs_service" "backend_service" {
   name            = "backend-service"
   cluster         = aws_ecs_cluster.backend_cluster.id

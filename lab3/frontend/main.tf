@@ -53,10 +53,12 @@ resource "aws_route_table_association" "pub_rt_association" {
   route_table_id = aws_route_table.pub_rt.id
 }
 
+# Create frontend ECS cluster
 resource "aws_ecs_cluster" "frontend_cluster" {
   name = "frontend-cluster"
 }
 
+# Create frontend ECS task definition
 resource "aws_ecs_task_definition" "frontend_task" {
   family                   = "FrontendTaskDef"
   network_mode             = "awsvpc"
@@ -97,6 +99,7 @@ resource "aws_ecs_task_definition" "frontend_task" {
   }
 }
 
+# Create a security group
 resource "aws_security_group" "frontend_sg" {
   name        = "frontend-sg"
   description = "Allow TCP 8080 for frontend"
@@ -117,6 +120,7 @@ resource "aws_security_group" "frontend_sg" {
   }
 }
 
+# Create frontend ECS service
 resource "aws_ecs_service" "frontend_service" {
   name            = "frontend-service"
   cluster         = aws_ecs_cluster.frontend_cluster.id
