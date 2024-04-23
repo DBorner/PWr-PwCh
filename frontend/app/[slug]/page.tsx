@@ -27,13 +27,26 @@ function timeout(delay: number) {
 }
 
 export default function Page({ params }: { params: { slug: string } }) {
-    const [cookies, setCookie, removeCookie] = useCookies(['game', 'playerPrivateKey', "playerPublicKey"]);
+    const [cookies, setCookie, removeCookie] = useCookies(['game', "playerId"]);
     const [gameData, setGameData] = useState<Game | null>(null);
     const [board, setBoard] = useState<TicTacToeBoard | null>(null);
     const [isConnected, setIsConnected] = useState(socket.connected);
     const [isLoaded, setIsLoaded] = useState(false);
     const [tryCount, setTryCount] = useState(0);
     const [confetti, setConfetti] = useState(false);
+
+    const config = {
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+    };
+
+    if (cookies.playerId === undefined) {
+        axios.get(`${process.env.API_URL}/game/player-id`, config).then((response) => {
+            setCookie("playerId", response.data.playerId);
+        }
+        );
+    }
 
     useEffect(() => {
     function onConnect() {
@@ -52,9 +65,9 @@ export default function Page({ params }: { params: { slug: string } }) {
 
     async function onGameUpdate() {
         try {
-            const response = await axios.get(`${process.env.API_URL}/game/${params.slug}`);
+            const response = await axios.get(`${process.env.API_URL}/game/${params.slug}`, config);
             const data = await response.data;
-            if(data.status === "winner" && data.currentPlayer === cookies.playerPublicKey){
+            if(data.status === "winner" && data.currentPlayer === cookies.playerId){
                 setConfetti(true);
             }
             setGameData(data);
@@ -84,11 +97,20 @@ export default function Page({ params }: { params: { slug: string } }) {
     
     const getGameData = async () => {
         try {
-        const response = await fetch(`${process.env.API_URL}/game/${params.slug}`);
+        const response = await fetch(`${process.env.API_URL}/game/${params.slug}`, config).catch((error) => {
+            console.error(error);
+            toast.error("Game not found");
+            navigate("/");
+        });
+        if (!response.ok) {
+            toast.error("Game not found");
+            navigate("/");
+            return;
+        }
         const data = await response.json();
         setGameData(data);
         setBoard(data.board);
-        if(data.status === "winner" && data.currentPlayer === cookies.playerPublicKey){
+        if(data.status === "winner" && data.currentPlayer === cookies.playerId){
             setConfetti(true);    
         }else{
             setConfetti(false);
@@ -105,17 +127,15 @@ export default function Page({ params }: { params: { slug: string } }) {
 
     const makeMove = async (row: number, column: number) => {
         const response = await axios.post(`${process.env.API_URL}/game/${params.slug}/move`, {
-            playerPrivateKey: cookies.playerPrivateKey,
-            playerPublicKey: cookies.playerPublicKey,
             row: row,
             column: column
-        }).catch((error) => {
+        }, config).catch((error) => {
             toast.error(error.response.data.message);
         }
         );
         if(response){
             const data = await response.data;
-            if(data.status === "winner" && data.currentPlayer === cookies.playerPublicKey){
+            if(data.status === "winner" && data.currentPlayer === cookies.playerId){
                 setConfetti(true);    
             }else{
                 setConfetti(false);
@@ -128,9 +148,7 @@ export default function Page({ params }: { params: { slug: string } }) {
 
     const restartGame = async () => {
         const response = await axios.post(`${process.env.API_URL}/game/${params.slug}/restart`, {
-            playerPrivateKey: cookies.playerPrivateKey,
-            playerPublicKey: cookies.playerPublicKey
-        }).catch((error) => {
+        }, config).catch((error) => {
             toast.error(error.response.data.message);
         }
         );
@@ -144,9 +162,7 @@ export default function Page({ params }: { params: { slug: string } }) {
 
     const quitGame = async () => {
         const response = await axios.post(`${process.env.API_URL}/game/${params.slug}/quit`, {
-            playerPrivateKey: cookies.playerPrivateKey,
-            playerPublicKey: cookies.playerPublicKey
-        }).catch(async (error) => {
+        }, config).catch(async (error) => {
             if(tryCount < 3){
                 setTryCount(tryCount + 1);
                 await timeout(1000);
@@ -154,15 +170,13 @@ export default function Page({ params }: { params: { slug: string } }) {
                 return;
             }
             removeCookie("game");
-            removeCookie("playerPrivateKey");
-            removeCookie("playerPublicKey");
+            removeCookie("playerId");
             socket.emit('leaveGame', params.slug);
             navigate("/");
         }
         ).then(() => {
             removeCookie("game");
-            removeCookie("playerPrivateKey");
-            removeCookie("playerPublicKey");
+            removeCookie("playerId");
             socket.emit('leaveGame', params.slug);
             navigate("/");
         });
@@ -193,7 +207,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <Button variant={"secondary"} onClick={quitGame}>Back to home</Button>
-                                            {gameData.currentPlayer === cookies.playerPublicKey && <Button onClick={restartGame}>Play again</Button>}
+                                            {gameData.currentPlayer === cookies.playerId && <Button onClick={restartGame}>Play again</Button>}
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>}
@@ -205,7 +219,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <Button variant={"secondary"} onClick={quitGame}>Back to home</Button>
-                                            {gameData.currentPlayer === cookies.playerPublicKey && <Button onClick={restartGame}>Play again</Button>}
+                                            {gameData.currentPlayer === cookies.playerId && <Button onClick={restartGame}>Play again</Button>}
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>}
@@ -234,14 +248,14 @@ export default function Page({ params }: { params: { slug: string } }) {
                                         </div>
                                         <div className="text-center place-self-center">
                                             {confetti && <ConfettiExplosion force={0.7} duration={2700} particleCount={200} width={1600}/>}
-                                            {gameData?.status==="in-progress" && (gameData?.currentPlayer === cookies.playerPublicKey ? "Your turn": "Opponent's turn")}
+                                            {gameData?.status==="in-progress" && (gameData?.currentPlayer === cookies.playerId ? "Your turn": "Opponent's turn")}
                                         </div>
                                         <div className="justify-items-end text-right">
                                             <h3 className="text-2xl font-bold tracking-tight">{gameData?.player2Name != null ? gameData.player2Name : "N/A"}</h3>
                                             <p className="text-muted-foreground">Player 2</p>
                                         </div>
                                     </div>
-                                    {board !== null && <Board board={board} makeMove={makeMove} isPlayerTurn={gameData?.currentPlayer === cookies.playerPublicKey} />}
+                                    {board !== null && <Board board={board} makeMove={makeMove} isPlayerTurn={gameData?.currentPlayer === cookies.playerId} />}
                                 </CardContent>
                                 <CardFooter>
                                     <div className="w-full flex justify-between">

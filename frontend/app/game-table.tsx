@@ -41,6 +41,7 @@ import axios from "axios"
 import { useCookies } from "react-cookie"
 import { redirect } from "next/dist/server/api-utils"
 import { navigate } from "./actions"
+import { config } from "process"
 
 interface GameTableProps {
   games: Game[];
@@ -54,7 +55,6 @@ export function GameTable({ games: data, refresh }: GameTableProps) {
   )
   const [cookies, setCookie, removeCookie] = useCookies(['game', 'playerPrivateKey', "playerPublicKey"]);
   const [gameName, setGameName] = React.useState<string>("")
-  const [userName, setUserName] = React.useState<string>("")
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
@@ -100,13 +100,11 @@ export function GameTable({ games: data, refresh }: GameTableProps) {
         <Button
           variant="outline"
           size="sm"
-          disabled={game.status !== "pending" || userName.length===0}
+          disabled={game.status !== "pending"}
           onClick={() => {
-            axios.post(process.env.API_URL + "/game/join/"+game.id, { userName: userName }).then((response) => {
+            axios.post(process.env.API_URL + "/game/join/"+game.id, {}, config).then((response) => {
               navigate(game.id)
               setCookie('game', game.id, { path: '/' })
-              setCookie('playerPrivateKey', response.data.playerPrivateKey, { path: '/' })
-              setCookie('playerPublicKey', response.data.playerPublicKey, { path: '/' })
             }
             ).catch((error) => {
               console.error(error)
@@ -140,12 +138,16 @@ export function GameTable({ games: data, refresh }: GameTableProps) {
     },
   })
 
+  const config = {
+    headers: {
+      Authorization: 'Bearer ' + localStorage.getItem('accessToken')
+    }
+  }
+
   const createGame = () => {
     if (gameName.length > 0) {
-      axios.post(process.env.API_URL + "/game/create", { name: gameName, userName: userName }).then((response) => {
+      axios.post(process.env.API_URL + "/game/create", { name: gameName }, config).then((response) => {
         setCookie('game', response.data.id, { path: '/' })
-        setCookie('playerPrivateKey', response.data.playerPrivateKey, { path: '/' })
-        setCookie('playerPublicKey', response.data.playerPublicKey, { path: '/' })
         navigate(response.data.id)
       }
       ).catch((error) => {
@@ -158,18 +160,13 @@ export function GameTable({ games: data, refresh }: GameTableProps) {
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
-        <Button variant="outline" className="mr-2" onClick={createGame} disabled={gameName.length===0||userName.length===0} >
+        <Button variant="outline" className="mr-2" onClick={createGame} disabled={gameName.length===0} >
           Create game
         </Button>
         <Input
           placeholder="Game name"
           className="lg:block w-1/4"
           onChange={(e) => setGameName(e.target.value)}
-          ></Input>
-        <Input
-          placeholder="Username"
-          className="ml-2 lg:block w-1/4"
-          onChange={(e) => setUserName(e.target.value)}
           ></Input>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

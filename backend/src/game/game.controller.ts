@@ -50,6 +50,16 @@ export class GameController {
     return { message: 'Game quit' };
   }
 
+  @Get('player-id')
+  getPlayerId(@CognitoUser() user: any) {
+    if (!user.sub) {
+      throw new HttpException('User not found', 404);
+    }
+    return {
+      playerId: user.sub,
+    };
+  }
+
   @Post('join/:id')
   joinGame(@Param('id') id: string, @CognitoUser() user: any) {
     const game = this.gameService.findOne(id);
@@ -63,7 +73,7 @@ export class GameController {
       throw new HttpException('You are already in the game', 400);
     }
     if (this.gameService.isGameAvailable(game.id)) {
-      this.gameService.addPlayerToGame(game.id, user.username, user.sub);
+      this.gameService.addPlayerToGame(game.id, user.nickname, user.sub);
       if (this.gameService.isGameReady(game)) {
         this.gameService.startGame(game);
       }
