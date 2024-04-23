@@ -1,13 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Game } from './interfaces/game.interface';
 import { v4 as uuidv4 } from 'uuid';
-import { randomBytes } from 'crypto';
-
-const generateKey = () => {
-  const key = randomBytes(32);
-  const hexKey = key.toString('hex');
-  return hexKey;
-};
 
 @Injectable()
 export class GameService {
@@ -31,15 +24,13 @@ export class GameService {
     return this.games.find((game) => game.id === id);
   }
 
-  createGame(name: string, userName: string): Game {
+  createGame(name: string, userName: string, userId: string): Game {
     const game: Game = new Game({
       id: uuidv4(),
       name,
-      player1: generateKey(),
-      player1pub: uuidv4(),
+      player1: userId,
       player1Name: userName,
       player2: null,
-      player2pub: null,
       player2Name: null,
       board: {
         board: [
@@ -80,34 +71,22 @@ export class GameService {
     return game.player1 === playerId || game.player2 === playerId;
   }
 
-  addPlayerToGame(
-    gameId: string,
-    playerName: string,
-  ): { privateKey: string; pubKey: string } {
+  addPlayerToGame(gameId: string, playerName: string, playerId: string): void {
     const game = this.findOne(gameId);
-    const playerPrivateKey = generateKey();
-    const playerPubKey = uuidv4();
     if (game.player1 === null) {
-      game.player1 = playerPrivateKey;
-      game.player1pub = playerPubKey;
+      game.player1 = playerId;
       game.player1Name = playerName;
     } else {
-      game.player2 = playerPrivateKey;
-      game.player2pub = playerPubKey;
+      game.player2 = playerId;
       game.player2Name = playerName;
     }
     this.update(gameId, game);
-    return {
-      privateKey: playerPrivateKey,
-      pubKey: playerPubKey,
-    };
   }
 
   removePlayerFromAllGames(playerId: string): void {
     this.games.forEach((game) => {
       if (game.player1 === playerId) {
         game.player1 = null;
-        game.player1pub = null;
         game.player1Name = null;
         game.currentPlayer = 'p1';
         if (game.status === 'winner' || game.status === 'draw') {
@@ -119,7 +98,6 @@ export class GameService {
       }
       if (game.player2 === playerId) {
         game.player2 = null;
-        game.player2pub = null;
         game.player2Name = null;
         game.currentPlayer = 'p2';
         if (game.status === 'winner' || game.status === 'draw') {
@@ -162,11 +140,11 @@ export class GameService {
 
   startGame(game: Game): void {
     if (game.currentPlayer === 'p1') {
-      game.currentPlayer = game.player1pub;
+      game.currentPlayer = game.player1;
     } else if (game.currentPlayer === 'p2') {
-      game.currentPlayer = game.player2pub;
+      game.currentPlayer = game.player2;
     } else {
-      game.currentPlayer = game.player1pub;
+      game.currentPlayer = game.player1;
     }
     game.status = 'in-progress';
     this.update(game.id, game);
@@ -176,38 +154,18 @@ export class GameService {
     return game.status === 'winner' || game.status === 'draw';
   }
 
-  authPlayer(gameId: string, playerId: string, playerPubKey: string): boolean {
-    const game = this.findOne(gameId);
-    if (game.player1 === playerId && game.player1pub === playerPubKey) {
-      return true;
-    }
-    if (game.player2 === playerId && game.player2pub === playerPubKey) {
-      return true;
-    }
-    return false;
-  }
-
-  makeMove(
-    game: Game,
-    row: number,
-    column: number,
-    playerPrivKey: string,
-    playerPubKey: string,
-  ): boolean {
-    if (!this.isPlayerTurn(game, playerPubKey)) {
-      return false;
-    }
-    if (this.authPlayer(game.id, playerPrivKey, playerPubKey) === false) {
+  makeMove(game: Game, row: number, column: number, playerId: string): boolean {
+    if (!this.isPlayerTurn(game, playerId)) {
       return false;
     }
     if (game.board.board[row].row[column].value !== null) {
       return false;
     }
     game.board.board[row].row[column].value =
-      playerPrivKey === game.player1 ? 'P1' : 'P2';
+      playerId === game.player1 ? 'P1' : 'P2';
     const winner = this.getGameWinner(game);
     if (winner !== null) {
-      game.currentPlayer = winner === 'P1' ? game.player1pub : game.player2pub;
+      game.currentPlayer = winner === 'P1' ? game.player1 : game.player2;
       game.status = 'winner';
       return true;
     }
@@ -216,7 +174,7 @@ export class GameService {
       return true;
     }
     game.currentPlayer =
-      playerPubKey === game.player1pub ? game.player2pub : game.player1pub;
+      playerId === game.player1 ? game.player2 : game.player1;
     game.updatedAt = new Date();
     this.update(game.id, game);
     return true;
@@ -276,9 +234,7 @@ export class GameService {
     };
     if (game.player1 !== null && game.player2 !== null) {
       game.currentPlayer =
-        game.player1pub === game.currentPlayer
-          ? game.player2pub
-          : game.player1pub;
+        game.player1 === game.currentPlayer ? game.player2 : game.player1;
       game.status = 'in-progress';
       game.updatedAt = new Date();
       this.update(game.id, game);

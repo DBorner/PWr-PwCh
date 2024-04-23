@@ -22,17 +22,11 @@ export class Game {
   player1: string;
 
   @IsString()
-  player1pub: string;
-
-  @IsString()
   player1Name: string;
 
   @Exclude()
   @IsString()
   player2: string;
-
-  @IsString()
-  player2pub: string;
 
   @IsString()
   player2Name: string;
