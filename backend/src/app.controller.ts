@@ -1,9 +1,11 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import JwtAuthenticationGuard from './auth/jwt.guard';
+import { Controller, Get } from '@nestjs/common';
+import { Authentication, CognitoUser } from '@nestjs-cognito/auth';
 
 @Controller('')
+@Authentication()
 export class AppController {
   @Get('')
-  @UseGuards(JwtAuthenticationGuard)
-  helloWorld() {}
+  returnUser(@CognitoUser() user: any) {
+    return user.nickname;
+  }
 }
