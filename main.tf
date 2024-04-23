@@ -157,7 +157,7 @@ resource "aws_instance" "app_server" {
   key_name                    = aws_key_pair.key_pair.key_name
 
   tags = {
-    Name = "TTTServer"
+    Name = "TTTApp"
   }
 
   connection {
@@ -180,6 +180,8 @@ resource "aws_instance" "app_server" {
       "sudo git clone https://github.com/DBorner/PWr-PwCh.git",
       "echo 'API_URL=\"http://${self.public_ip}:3000/api\"' | sudo tee PWr-PwCh/frontend/.env.local",
       "echo 'SOCKET_URL=\"http://${self.public_ip}:3000\"' | sudo tee -a PWr-PwCh/frontend/.env.local",
+      "echo 'COGNITO_USER_POOL_ID=' | sudo tee PWr-PwCh/backend/.env",
+      "echo 'COGNITO_CLIENT_ID=' | sudo tee -a PWr-PwCh/backend/.env",
       "cd PWr-PwCh",
       "sudo docker-compose up --detach"
     ]
