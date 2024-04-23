@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   AuthenticationDetails,
+  CognitoRefreshToken,
   CognitoUser,
   CognitoUserAttribute,
   CognitoUserPool,
@@ -9,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { RegisterRequestDto } from './dto/register.request.dto';
 import { AuthenticateRequestDto } from './dto/authenticate.request.dto';
 import { ConfirmRequestDto } from './dto/confirm.request.dto';
+import { RefreshRequestDto } from './dto/refresh.request.dto';
 
 @Injectable()
 export class AuthService {
@@ -81,6 +83,95 @@ export class AuthService {
           resolve(result);
         }
       });
+    });
+  }
+
+  async resendConfirmationCode(name: string) {
+    const userData = {
+      Username: name,
+      Pool: this.userPool,
+    };
+    const newUser = new CognitoUser(userData);
+    return new Promise((resolve, reject) => {
+      return newUser.resendConfirmationCode((err, result) => {
+        if (!result) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
+  async forgotPassword(name: string) {
+    const userData = {
+      Username: name,
+      Pool: this.userPool,
+    };
+    const newUser = new CognitoUser(userData);
+    return new Promise((resolve, reject) => {
+      return newUser.forgotPassword({
+        onSuccess: (result) => {
+          resolve(result);
+        },
+        onFailure: (err) => {
+          reject(err);
+        },
+      });
+    });
+  }
+
+  async confirmNewPassword(name: string, code: string, password: string) {
+    const userData = {
+      Username: name,
+      Pool: this.userPool,
+    };
+    const newUser = new CognitoUser(userData);
+    return new Promise<void>((resolve, reject) => {
+      return newUser.confirmPassword(code, password, {
+        onSuccess: () => {
+          resolve();
+        },
+        onFailure: (err) => {
+          reject(err);
+        },
+      });
+    });
+  }
+
+  async changePassword(name: string, oldPassword: string, newPassword: string) {
+    const userData = {
+      Username: name,
+      Pool: this.userPool,
+    };
+    const newUser = new CognitoUser(userData);
+    return new Promise<void>((resolve, reject) => {
+      return newUser.changePassword(oldPassword, newPassword, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  async refreshTokens(refreshToken: RefreshRequestDto) {
+    const refreshTokenObj = new CognitoUser({
+      Username: refreshToken.name,
+      Pool: this.userPool,
+    });
+    return new Promise((resolve, reject) => {
+      return refreshTokenObj.refreshSession(
+        new CognitoRefreshToken({ RefreshToken: refreshToken.refreshToken }),
+        (err, session) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(session);
+          }
+        },
+      );
     });
   }
 }

@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthenticateRequestDto } from './dto/authenticate.request.dto';
 import { RegisterRequestDto } from './dto/register.request.dto';
 import { ConfirmRequestDto } from './dto/confirm.request.dto';
+import { RefreshRequestDto } from './dto/refresh.request.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +30,15 @@ export class AuthController {
   async confirm(@Body() confirmRequest: ConfirmRequestDto) {
     try {
       return await this.authService.confirmRegistration(confirmRequest);
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('refreshToken')
+  async refreshToken(@Body() refreshToken: RefreshRequestDto) {
+    try {
+      return await this.authService.refreshTokens(refreshToken);
     } catch (e) {
       throw new BadRequestException(e.message);
     }
