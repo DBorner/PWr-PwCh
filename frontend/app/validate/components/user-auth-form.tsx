@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { useCookies } from "react-cookie";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -36,6 +37,8 @@ const FormSchema = z.object({
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [cookies, setCookie, removeCookie] = useCookies(['user']);
+
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -50,7 +53,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     console.log(pin)
     const body = {
       code: pin,
-      name: localStorage.getItem("user"),
+      name: cookies.user,
     }
     toast.promise(
       fetch(process.env.API_URL + "/auth/confirm", {

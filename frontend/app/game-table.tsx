@@ -53,7 +53,7 @@ export function GameTable({ games: data, refresh }: GameTableProps) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
-  const [cookies, setCookie, removeCookie] = useCookies(['game', 'playerPrivateKey', "playerPublicKey"]);
+  const [cookies, setCookie, removeCookie] = useCookies(['game', 'playerPrivateKey', "playerPublicKey", 'accessToken',]);
   const [gameName, setGameName] = React.useState<string>("")
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
@@ -140,7 +140,7 @@ export function GameTable({ games: data, refresh }: GameTableProps) {
 
   const config = {
     headers: {
-      Authorization: 'Bearer ' + localStorage.getItem('accessToken')
+      Authorization: 'Bearer ' + cookies.accessToken,
     }
   }
 

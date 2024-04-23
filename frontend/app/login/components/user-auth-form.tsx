@@ -1,58 +1,68 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
-import { Button} from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; 
+import { Label } from "@/components/ui/label";
 import { navigate } from "@/app/actions";
 import toast from "react-hot-toast";
-import { cookies } from "next/headers";
+import { useCookies } from "react-cookie";
+import { set } from "react-hook-form";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
-  const [isLoading, setIsLoading] = React.useState<boolean>(false)
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [cookies, setCookie, removeCookie] = useCookies([
+    "refreshToken",
+    "accessToken",
+    "user"
+  ]);
 
   async function onSubmit(event: React.SyntheticEvent) {
-    event.preventDefault()
-    setIsLoading(true)
-    const form = event.currentTarget as HTMLFormElement
-    const name = (form.elements.namedItem("username") as HTMLInputElement).value
-    const password = (form.elements.namedItem("password") as HTMLInputElement).value
+    event.preventDefault();
+    setIsLoading(true);
+    const form = event.currentTarget as HTMLFormElement;
+    const name = (form.elements.namedItem("username") as HTMLInputElement)
+      .value;
+    const password = (form.elements.namedItem("password") as HTMLInputElement)
+      .value;
     try {
-      await fetch(process.env.API_URL + '/auth/authenticate', {
+      await fetch(process.env.API_URL + "/auth/authenticate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ name, password }),
-      }).catch((error) => {
-        const data = error.json()
-        toast.error(data.message)
-        setIsLoading(false)
-      }).then((response) => {
-        if (response.ok) {
-          toast.success("Logged in successfully")
-          response.json().then((data) => {
-            localStorage.setItem("accessToken", data.idToken.jwtToken)
-            localStorage.setItem("refreshToken", data.refreshToken.token)
-            navigate("")
-          }
-          )
-        } else {
-          response.json().then((data) => {
-            toast.error(data.message)
-          })
-        }
-        setIsLoading(false)
       })
+        .catch((error) => {
+          const data = error.json();
+          toast.error(data.message);
+          setIsLoading(false);
+        })
+        .then((response) => {
+          if (response instanceof Response && response.ok) {
+            toast.success("Logged in successfully");
+            response.json().then((data) => {
+              setCookie("accessToken", data.idToken.jwtToken);
+              setCookie("refreshToken", data.refreshToken.token);
+              setCookie("user", data.idToken.payload.nickname);
+              navigate("");
+            });
+          } else {
+            (response as Response).json().then((data) => {
+              toast.error(data.message);
+            });
+          }
+          setIsLoading(false);
+        });
     } catch (error) {
-        console.error("An unexpected error occurred:", error)
-        setIsLoading(false)
-        }
+      console.error("An unexpected error occurred:", error);
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -61,7 +71,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         <div className="grid gap-2">
           <div className="grid gap-1">
             <Label className="sr-only" htmlFor="username">
-                Username
+              Username
             </Label>
             <Input
               id="username"
@@ -74,7 +84,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               disabled={isLoading}
             />
             <Label className="sr-only" htmlFor="password">
-                Password
+              Password
             </Label>
             <Input
               id="password"
@@ -105,12 +115,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           </span>
         </div>
       </div>
-      <Button variant="outline" type="button" disabled={isLoading} onClick={
-        () => {
-           navigate("register")
-        }
-      
-      }>
+      <Button
+        variant="outline"
+        type="button"
+        disabled={isLoading}
+        onClick={() => {
+          navigate("register");
+        }}
+      >
         {isLoading ? (
           <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
         ) : (
@@ -119,5 +131,5 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         Sign up with Email
       </Button>
     </div>
-  )
+  );
 }

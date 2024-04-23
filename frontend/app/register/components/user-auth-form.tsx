@@ -9,11 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; 
 import { navigate } from "@/app/actions";
 import toast from "react-hot-toast";
+import { useCookies } from "react-cookie";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
+  const [cookies, setCookie, removeCookie] = useCookies(['user',]);
+
 
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
@@ -35,14 +38,16 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         toast.error(data.message)
         setIsLoading(false)
       }).then((response) => {
-        if (response.ok) {
+        if (response instanceof Response && response.ok) {
           toast.success("User registered")
-          localStorage.setItem("user", name)
+          setCookie("user", name)
           navigate("validate")
         } else {
-          response.json().then((data) => {
-            toast.error(data.message)
-          })
+          if (response instanceof Response) {
+            response.json().then((data) => {
+              toast.error(data.message)
+            })
+          }
         }
         setIsLoading(false)
       })
