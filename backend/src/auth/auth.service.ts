@@ -15,11 +15,12 @@ import { RefreshRequestDto } from './dto/refresh.request.dto';
 @Injectable()
 export class AuthService {
   private userPool: CognitoUserPool;
+  private userSessions: any = {};
 
   constructor(private configService: ConfigService) {
     this.userPool = new CognitoUserPool({
-      UserPoolId: this.configService.get<string>('AWS_COGNITO_USER_POOL_ID'),
-      ClientId: this.configService.get<string>('AWS_COGNITO_CLIENT_ID'),
+      UserPoolId: this.configService.get<string>('COGNITO_USER_POOL_ID'),
+      ClientId: this.configService.get<string>('COGNITO_CLIENT_ID'),
     });
   }
 
@@ -59,6 +60,7 @@ export class AuthService {
     return new Promise((resolve, reject) => {
       return newUser.authenticateUser(authenticationDetails, {
         onSuccess: (result) => {
+          this.userSessions[name] = newUser;
           resolve(result);
         },
         onFailure: (err) => {
@@ -172,6 +174,28 @@ export class AuthService {
           }
         },
       );
+    });
+  }
+
+  async singOut(name: string) {
+    const user = this.userSessions[name];
+    if (!user) {
+      throw new Error('User not found');
+    }
+    user.getSession((err: any, result: any) => {
+      if (result) {
+        user.globalSignOut({
+          onSuccess: (result) => {
+            this.userSessions[name] = null;
+            return result;
+          },
+          onFailure: (err) => {
+            return err;
+          },
+        });
+      } else {
+        return err;
+      }
     });
   }
 }

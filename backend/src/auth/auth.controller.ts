@@ -4,6 +4,7 @@ import { AuthenticateRequestDto } from './dto/authenticate.request.dto';
 import { RegisterRequestDto } from './dto/register.request.dto';
 import { ConfirmRequestDto } from './dto/confirm.request.dto';
 import { RefreshRequestDto } from './dto/refresh.request.dto';
+import { Authentication, CognitoUser } from '@nestjs-cognito/auth';
 
 @Controller('auth')
 export class AuthController {
@@ -39,6 +40,16 @@ export class AuthController {
   async refreshToken(@Body() refreshToken: RefreshRequestDto) {
     try {
       return await this.authService.refreshTokens(refreshToken);
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Post('logout')
+  @Authentication()
+  async logout(@CognitoUser() user: any) {
+    try {
+      return await this.authService.singOut(user['cognito:username']);
     } catch (e) {
       throw new BadRequestException(e.message);
     }
