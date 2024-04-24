@@ -1,7 +1,11 @@
-import { Controller } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get } from '@nestjs/common';
+import { Authentication, CognitoUser } from '@nestjs-cognito/auth';
 
-@Controller()
+@Controller('')
+@Authentication()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  @Get('')
+  returnUser(@CognitoUser() user: any) {
+    return user.nickname;
+  }
 }
