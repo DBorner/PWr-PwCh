@@ -148,13 +148,15 @@ resource "local_file" "private_key" {
 }
 
 variable "cognito_client_id" {
+  type        = string
+  nullable = false
   description = "Cognito client ID"
-  default     = ""
 }
 
 variable "cognito_user_pool_id" {
+  type        = string
+  nullable = false
   description = "Cognito user pool ID"
-  default     = ""
 }
 
 # Create an EC2 instance
