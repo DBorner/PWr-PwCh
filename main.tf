@@ -147,6 +147,16 @@ resource "local_file" "private_key" {
   filename = var.key_name
 }
 
+variable "cognito_client_id" {
+  description = "Cognito client ID"
+  default     = ""
+}
+
+variable "cognito_user_pool_id" {
+  description = "Cognito user pool ID"
+  default     = ""
+}
+
 # Create an EC2 instance
 resource "aws_instance" "app_server" {
   ami                         = "ami-0c101f26f147fa7fd"
@@ -180,8 +190,8 @@ resource "aws_instance" "app_server" {
       "sudo git clone https://github.com/DBorner/PWr-PwCh.git",
       "echo 'API_URL=\"http://${self.public_ip}:3000/api\"' | sudo tee PWr-PwCh/frontend/.env.local",
       "echo 'SOCKET_URL=\"http://${self.public_ip}:3000\"' | sudo tee -a PWr-PwCh/frontend/.env.local",
-      "echo 'COGNITO_USER_POOL_ID=' | sudo tee PWr-PwCh/backend/.env",
-      "echo 'COGNITO_CLIENT_ID=' | sudo tee -a PWr-PwCh/backend/.env",
+      "echo 'COGNITO_USER_POOL_ID=${var.cognito_user_pool_id}' | sudo tee PWr-PwCh/backend/.env",
+      "echo 'COGNITO_CLIENT_ID=${var.cognito_client_id}' | sudo tee -a PWr-PwCh/backend/.env",
       "cd PWr-PwCh",
       "sudo docker-compose up --detach"
     ]
