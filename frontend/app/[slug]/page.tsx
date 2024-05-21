@@ -3,9 +3,8 @@
 import Board from "./components/board";
 import { TicTacToeBoard } from "@/app/types/game";
 import { Game } from "@/app/types/game";
-import { SetStateAction, useEffect, useState } from "react";
+import { SetStateAction, use, useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
 import { useCookies } from "react-cookie";
 import { navigate } from "../actions";
 import { socket } from "../service/socket";
@@ -30,7 +29,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 import ConfettiExplosion from "react-confetti-explosion";
-
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { set } from "react-hook-form";
 
 function timeout(delay: number) {
   return new Promise((res) => setTimeout(res, delay));
@@ -44,6 +44,8 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [tryCount, setTryCount] = useState(0);
   const [confetti, setConfetti] = useState(false);
+  const [player1Image, setPlayer1Image] = useState<string>("no_img.jpg");
+  const [player2Image, setPlayer2Image] = useState<string>("no_img.jpg");
 
   let config = {
     headers: {
@@ -59,8 +61,17 @@ export default function Page({ params }: { params: { slug: string } }) {
       });
   }
 
-  const getUserImageFromS3 = async (playerName: string) => {
-    
+  const getUserImageFromS3 = async () => {
+    if(gameData?.player2Name != null){
+      setPlayer2Image(`https://tic-tac-toe-pwr-game.s3.amazonaws.com/${gameData?.player2Name}.jpg`)
+    } else {
+      setPlayer2Image("no_img.jpg")
+    }
+    if(gameData?.player1Name != null){
+      setPlayer1Image(`https://tic-tac-toe-pwr-game.s3.amazonaws.com/${gameData?.player1Name}.jpg`)
+    } else {
+      setPlayer1Image("no_img.jpg")
+    }
   };
 
   useEffect(() => {
@@ -150,6 +161,13 @@ export default function Page({ params }: { params: { slug: string } }) {
       });
   };
 
+  useEffect(() => {
+    if (gameData !== null) {
+      getUserImageFromS3();
+    }
+  }
+  , [gameData]);
+
   const makeMove = async (row: number, column: number) => {
     const response = await axios
       .post(
@@ -175,6 +193,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       socket.emit("updateGame", params.slug);
     }
   };
+  
 
   const restartGame = async () => {
     const response = await axios
@@ -295,7 +314,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                     <div className="justify-items-start text-left">
                       <div className="flex items-center">
                         <Avatar>
-                          <AvatarImage src="no_img.jpg" />
+                          <AvatarImage src={player1Image} />
                           <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
                         <h3 className="text-2xl font-bold tracking-tight px-2">
@@ -328,7 +347,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                             : "N/A"}
                         </h3>
                         <Avatar>
-                          <AvatarImage src='no_img.jpg' />
+                          <AvatarImage src={player2Image} />
                           <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
                       </div>
