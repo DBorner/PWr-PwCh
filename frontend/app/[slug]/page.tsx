@@ -63,12 +63,12 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   const getUserImageFromS3 = async () => {
     if(gameData?.player2Name != null){
-      setPlayer2Image(`https://tic-tac-toe-pwr-game.s3.amazonaws.com/${gameData?.player2Name}.jpg`)
+      setPlayer2Image(`https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${gameData?.player2Name}.jpg`)
     } else {
       setPlayer2Image("noimg.gif")
     }
     if(gameData?.player1Name != null){
-      setPlayer1Image(`https://tic-tac-toe-pwr-game.s3.amazonaws.com/${gameData?.player1Name}.jpg`)
+      setPlayer1Image(`https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${gameData?.player1Name}.jpg`)
     } else {
       setPlayer1Image("noimg.gif")
     }
