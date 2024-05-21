@@ -1,10 +1,19 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthenticateRequestDto } from './dto/authenticate.request.dto';
 import { RegisterRequestDto } from './dto/register.request.dto';
 import { ConfirmRequestDto } from './dto/confirm.request.dto';
 import { RefreshRequestDto } from './dto/refresh.request.dto';
 import { Authentication, CognitoUser } from '@nestjs-cognito/auth';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -53,5 +62,22 @@ export class AuthController {
     } catch (e) {
       throw new BadRequestException(e.message);
     }
+  }
+
+  @Post('upload')
+  @Authentication()
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @CognitoUser() user: any,
+  ) {
+    const username = user['cognito:username'];
+    const response = await this.authService.uploadFileToS3(
+      file,
+      username + '.jpg',
+    );
+    console.log(response);
+
+    return { message: 'File uploaded' };
   }
 }

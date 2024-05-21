@@ -11,7 +11,7 @@ import { RegisterRequestDto } from './dto/register.request.dto';
 import { AuthenticateRequestDto } from './dto/authenticate.request.dto';
 import { ConfirmRequestDto } from './dto/confirm.request.dto';
 import { RefreshRequestDto } from './dto/refresh.request.dto';
-
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 @Injectable()
 export class AuthService {
   private userPool: CognitoUserPool;
@@ -197,5 +197,26 @@ export class AuthService {
         return err;
       }
     });
+  }
+
+  async uploadFileToS3(file: Express.Multer.File, name: string) {
+    const s3Client = new S3Client({
+      region: this.configService.get<string>('AWS_REGION'),
+      credentials: {
+        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.get<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        ),
+        sessionToken: this.configService.get<string>('AWS_SESSION_TOKEN'),
+      },
+    });
+    const response = await s3Client.send(
+      new PutObjectCommand({
+        Bucket: this.configService.get<string>('AWS_S3_BUCKET'),
+        Key: name,
+        Body: file.buffer,
+      }),
+    );
+    return response;
   }
 }
