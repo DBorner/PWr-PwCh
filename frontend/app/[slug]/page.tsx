@@ -4,6 +4,8 @@ import Board from "./components/board";
 import { TicTacToeBoard } from "@/app/types/game";
 import { Game } from "@/app/types/game";
 import { SetStateAction, useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 import { useCookies } from "react-cookie";
 import { navigate } from "../actions";
 import { socket } from "../service/socket";
@@ -28,8 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 import ConfettiExplosion from "react-confetti-explosion";
-import { cp } from "fs";
-import { set } from "react-hook-form";
+
 
 function timeout(delay: number) {
   return new Promise((res) => setTimeout(res, delay));
@@ -57,6 +58,10 @@ export default function Page({ params }: { params: { slug: string } }) {
         setCookie("playerId", response.data.playerId);
       });
   }
+
+  const getUserImageFromS3 = async (playerName: string) => {
+    
+  };
 
   useEffect(() => {
     function onConnect() {
@@ -288,11 +293,17 @@ export default function Page({ params }: { params: { slug: string } }) {
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4 mb-2">
                     <div className="justify-items-start text-left">
-                      <h3 className="text-2xl font-bold tracking-tight">
-                        {gameData?.player1Name != null
-                          ? gameData.player1Name
-                          : "N/A"}
-                      </h3>
+                      <div className="flex items-center">
+                        <Avatar>
+                          <AvatarImage src="no_img.jpg" />
+                          <AvatarFallback>CN</AvatarFallback>
+                        </Avatar>
+                        <h3 className="text-2xl font-bold tracking-tight px-2">
+                          {gameData?.player1Name != null
+                            ? gameData.player1Name
+                            : "N/A"}
+                        </h3>
+                      </div>
                       <p className="text-muted-foreground">Player 1</p>
                     </div>
                     <div className="text-center place-self-center">
@@ -310,11 +321,17 @@ export default function Page({ params }: { params: { slug: string } }) {
                           : "Opponent's turn")}
                     </div>
                     <div className="justify-items-end text-right">
-                      <h3 className="text-2xl font-bold tracking-tight">
-                        {gameData?.player2Name != null
-                          ? gameData.player2Name
-                          : "N/A"}
-                      </h3>
+                      <div className="flex justify-end items-center">
+                        <h3 className="text-2xl font-bold tracking-tight px-2">
+                          {gameData?.player2Name != null
+                            ? gameData.player2Name
+                            : "N/A"}
+                        </h3>
+                        <Avatar>
+                          <AvatarImage src='no_img.jpg' />
+                          <AvatarFallback>CN</AvatarFallback>
+                        </Avatar>
+                      </div>
                       <p className="text-muted-foreground">Player 2</p>
                     </div>
                   </div>
