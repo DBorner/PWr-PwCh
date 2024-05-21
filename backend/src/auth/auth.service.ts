@@ -215,6 +215,7 @@ export class AuthService {
         Bucket: this.configService.get<string>('AWS_S3_BUCKET'),
         Key: name,
         Body: file.buffer,
+        ACL: 'public-read',
       }),
     );
     return response;

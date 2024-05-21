@@ -134,6 +134,15 @@ export default function GameListPage() {
                 variant={"ghost"}
                 className="mr-4"
                 onClick={() => {
+                  navigate("upload-image");
+                }}
+              >
+                Change profile picture
+              </Button>
+              <Button
+                variant={"ghost"}
+                className="mr-4"
+                onClick={() => {
                   navigate("logout");
                 }}
               >

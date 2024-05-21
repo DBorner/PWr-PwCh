@@ -65,12 +65,12 @@ export default function Page({ params }: { params: { slug: string } }) {
     if(gameData?.player2Name != null){
       setPlayer2Image(`https://tic-tac-toe-pwr-game.s3.amazonaws.com/${gameData?.player2Name}.jpg`)
     } else {
-      setPlayer2Image("no_img.jpg")
+      setPlayer2Image("noimg.gif")
     }
     if(gameData?.player1Name != null){
       setPlayer1Image(`https://tic-tac-toe-pwr-game.s3.amazonaws.com/${gameData?.player1Name}.jpg`)
     } else {
-      setPlayer1Image("no_img.jpg")
+      setPlayer1Image("noimg.gif")
     }
   };
 
