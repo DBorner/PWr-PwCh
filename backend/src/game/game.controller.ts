@@ -22,6 +22,11 @@ export class GameController {
     return this.gameService.checkAvailableGames();
   }
 
+  @Get('history')
+  async getGameHistory(@CognitoUser() user: any) {
+    return await this.gameService.getPlayerGamesHistory(user.sub);
+  }
+
   @Post('create')
   createGame(@CognitoUser() user: any, @Body() body: { name: string }) {
     if (!body.name) {

@@ -271,4 +271,17 @@ export class GameService {
       this.update(game.id, game);
     }
   }
+
+  async getPlayerGamesHistory(playerId: string): Promise<any> {
+    console.log('playerId', playerId);
+    const result = await this.gameHisoryModel
+      .scan('player1')
+      .eq(playerId)
+      .or()
+      .where('player2')
+      .eq(playerId)
+      .exec();
+    console.log('result', result);
+    return result;
+  }
 }
