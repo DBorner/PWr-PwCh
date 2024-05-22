@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Game } from './interfaces/game.interface';
+import { Game, GameHistory, GameHistoryKey } from './interfaces/game.interface';
 import { v4 as uuidv4 } from 'uuid';
+import { InjectModel, Model } from 'nestjs-dynamoose';
 
 @Injectable()
 export class GameService {
   private readonly games: Game[] = [];
+
+  constructor(
+    @InjectModel('GameHistory')
+    private gameHisoryModel: Model<GameHistory, GameHistoryKey>,
+  ) {}
 
   findAll(): Game[] {
     return this.games;
@@ -167,10 +173,31 @@ export class GameService {
     if (winner !== null) {
       game.currentPlayer = winner === 'P1' ? game.player1 : game.player2;
       game.status = 'winner';
+      this.gameHisoryModel.create({
+        id: uuidv4(),
+        name: game.name,
+        player1: game.player1,
+        player1Name: game.player1Name,
+        player2: game.player2,
+        player2Name: game.player2Name,
+        board: game.board,
+        status: 'winner',
+        winner: winner === 'P1' ? game.player1 : game.player2,
+      });
       return true;
     }
     if (this.isGameDraw(game)) {
       game.status = 'draw';
+      this.gameHisoryModel.create({
+        id: uuidv4(),
+        name: game.name,
+        player1: game.player1,
+        player1Name: game.player1Name,
+        player2: game.player2,
+        player2Name: game.player2Name,
+        board: game.board,
+        status: 'draw',
+      });
       return true;
     }
     game.currentPlayer =

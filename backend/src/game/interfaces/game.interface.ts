@@ -51,3 +51,18 @@ export class Game {
     Object.assign(this, partial);
   }
 }
+
+export interface GameHistoryKey {
+  id: string;
+}
+
+export interface GameHistory extends GameHistoryKey {
+  name: string;
+  player1: string;
+  player1Name: string;
+  player2: string;
+  player2Name: string;
+  board: TicTacToeBoard;
+  status: string;
+  winner?: string;
+}
