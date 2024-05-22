@@ -29,7 +29,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 import ConfettiExplosion from "react-confetti-explosion";
-import { date } from "zod";
 
 function timeout(delay: number) {
   return new Promise((res) => setTimeout(res, delay));
@@ -45,15 +44,13 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [confetti, setConfetti] = useState(false);
   const [player1Image, setPlayer1Image] = useState<string>("no_img.jpg");
   const [player2Image, setPlayer2Image] = useState<string>("no_img.jpg");
+  const [timestamp, setTimestamp] = useState<number>(Date.now());
 
   let config = {
     headers: {
       Authorization: `Bearer ${cookies.accessToken}`,
     },
   };
-
-  let timestamp = new Date().getTime();
-
 
   if (cookies.playerId === undefined) {
     axios
@@ -95,10 +92,15 @@ export default function Page({ params }: { params: { slug: string } }) {
         await getGameData(secondary);
     }
 
+    async function userJoined(secondary: boolean = false) {
+      setTimestamp(Date.now());
+      await getGameData(secondary);
+    }
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("gameUpdated", onGameUpdate);
-    socket.on("playerJoined", onGameUpdate);
+    socket.on("playerJoined", userJoined);
     socket.on("playerLeft", onGameUpdate);
     connectToGame();
 
