@@ -281,7 +281,10 @@ export class GameService {
       .where('player2')
       .eq(playerId)
       .exec();
-    console.log('result', result);
+    result.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
     return result;
   }
 }

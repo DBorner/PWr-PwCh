@@ -130,6 +130,15 @@ export default function GameListPage() {
               </p>
             </div>
             <div className="basis-1/4 flex justify-end me-3">
+            <Button
+                variant={"ghost"}
+                className="mr-4"
+                onClick={() => {
+                  navigate("history");
+                }}
+              >
+                Games history
+              </Button>
               <Button
                 variant={"ghost"}
                 className="mr-4"

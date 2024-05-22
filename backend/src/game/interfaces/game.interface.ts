@@ -65,4 +65,6 @@ export interface GameHistory extends GameHistoryKey {
   board: TicTacToeBoard;
   status: string;
   winner?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
