@@ -29,8 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 import ConfettiExplosion from "react-confetti-explosion";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { set } from "react-hook-form";
+import { date } from "zod";
 
 function timeout(delay: number) {
   return new Promise((res) => setTimeout(res, delay));
@@ -52,6 +51,9 @@ export default function Page({ params }: { params: { slug: string } }) {
       Authorization: `Bearer ${cookies.accessToken}`,
     },
   };
+
+  let timestamp = new Date().getTime();
+
 
   if (cookies.playerId === undefined) {
     axios
@@ -314,7 +316,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                     <div className="justify-items-start text-left">
                       <div className="flex items-center">
                         <Avatar>
-                          <AvatarImage src={player1Image} />
+                          <AvatarImage src={player1Image + `?${timestamp}`} />
                           <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
                         <h3 className="text-2xl font-bold tracking-tight px-2">
@@ -347,7 +349,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                             : "N/A"}
                         </h3>
                         <Avatar>
-                          <AvatarImage src={player2Image} />
+                          <AvatarImage src={player2Image + `?${timestamp}`} />
                           <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
                       </div>
