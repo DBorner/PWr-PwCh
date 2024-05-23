@@ -134,6 +134,15 @@ export default function GameListPage() {
                 variant={"ghost"}
                 className="mr-4"
                 onClick={() => {
+                  navigate("ranking");
+                }}
+              >
+                Ranking
+              </Button>
+            <Button
+                variant={"ghost"}
+                className="mr-4"
+                onClick={() => {
                   navigate("history");
                 }}
               >

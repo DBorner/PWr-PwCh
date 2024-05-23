@@ -294,12 +294,20 @@ export class GameService {
 
   updateGameRanking(): any {
     // send request to the ranking service
-    fetch(this.configService.get<string>('UPDATE_RANKING_API'))
+    fetch(this.configService.get<string>('UPDATE_RANKING_API'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
-        if (data.status === 200) {
+        if (data.statusCode === 200) {
+          console.log('Ranking updated');
           return true;
         } else {
+          console.log('Ranking update failed');
+          console.log(data);
           return false;
         }
       })
