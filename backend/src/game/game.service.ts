@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Game, GameHistory, GameHistoryKey } from './interfaces/game.interface';
 import { v4 as uuidv4 } from 'uuid';
 import { InjectModel, Model } from 'nestjs-dynamoose';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GameService {
@@ -10,6 +11,7 @@ export class GameService {
   constructor(
     @InjectModel('GameHistory')
     private gameHisoryModel: Model<GameHistory, GameHistoryKey>,
+    private configService: ConfigService,
   ) {}
 
   findAll(): Game[] {
@@ -184,6 +186,7 @@ export class GameService {
         status: 'winner',
         winner: winner === 'P1' ? game.player1 : game.player2,
       });
+      this.updateGameRanking();
       return true;
     }
     if (this.isGameDraw(game)) {
@@ -198,6 +201,7 @@ export class GameService {
         board: game.board,
         status: 'draw',
       });
+      this.updateGameRanking();
       return true;
     }
     game.currentPlayer =
@@ -286,5 +290,22 @@ export class GameService {
     });
 
     return result;
+  }
+
+  updateGameRanking(): any {
+    // send request to the ranking service
+    fetch(this.configService.get<string>('UPDATE_RANKING_API'))
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === 200) {
+          return true;
+        } else {
+          return false;
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        return false;
+      });
   }
 }

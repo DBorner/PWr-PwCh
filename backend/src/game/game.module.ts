@@ -4,9 +4,11 @@ import { GameHistorySchema } from './schemas/game.schema';
 import { GameService } from './game.service';
 import { GameController } from './game.controller';
 import { GameGateway } from './game.gateway';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule,
     DynamooseModule.forFeature([
       {
         name: 'GameHistory',
