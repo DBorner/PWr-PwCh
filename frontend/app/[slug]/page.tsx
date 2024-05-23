@@ -4,7 +4,7 @@ import Board from "./components/board";
 import { TicTacToeBoard } from "@/app/types/game";
 import { Game } from "@/app/types/game";
 import { SetStateAction, use, useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCookies } from "react-cookie";
 import { navigate } from "../actions";
 import { socket } from "../service/socket";
@@ -35,7 +35,13 @@ function timeout(delay: number) {
 }
 
 export default function Page({ params }: { params: { slug: string } }) {
-  const [cookies, setCookie, removeCookie] = useCookies(["game", "playerId", "accessToken", "refreshToken", "user"]);
+  const [cookies, setCookie, removeCookie] = useCookies([
+    "game",
+    "playerId",
+    "accessToken",
+    "refreshToken",
+    "user",
+  ]);
   const [gameData, setGameData] = useState<Game | null>(null);
   const [board, setBoard] = useState<TicTacToeBoard | null>(null);
   const [isConnected, setIsConnected] = useState(socket.connected);
@@ -61,15 +67,19 @@ export default function Page({ params }: { params: { slug: string } }) {
   }
 
   const getUserImageFromS3 = async () => {
-    if(gameData?.player2Name != null){
-      setPlayer2Image(`https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${gameData?.player2Name}.jpg`)
+    if (gameData?.player2Name != null) {
+      setPlayer2Image(
+        `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${gameData?.player2Name}.jpg`
+      );
     } else {
-      setPlayer2Image("noimg.gif")
+      setPlayer2Image("noimg.gif");
     }
-    if(gameData?.player1Name != null){
-      setPlayer1Image(`https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${gameData?.player1Name}.jpg`)
+    if (gameData?.player1Name != null) {
+      setPlayer1Image(
+        `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${gameData?.player1Name}.jpg`
+      );
     } else {
-      setPlayer1Image("noimg.gif")
+      setPlayer1Image("noimg.gif");
     }
   };
 
@@ -89,7 +99,7 @@ export default function Page({ params }: { params: { slug: string } }) {
     }
 
     async function onGameUpdate(secondary: boolean = false) {
-        await getGameData(secondary);
+      await getGameData(secondary);
     }
 
     async function userJoined(secondary: boolean = false) {
@@ -119,20 +129,19 @@ export default function Page({ params }: { params: { slug: string } }) {
       })
       .then(async (response) => {
         if (response instanceof Response && !response.ok) {
-        console.log("Notok");
-        if (cookies.refreshToken === null) {
+          if (cookies.refreshToken === null) {
             console.log("Failed to load game");
             toast.error("Failed to load game");
             navigate("/");
             return;
-        }
+          }
           axios
             .post(process.env.API_URL + "/auth/refreshToken", {
               refreshToken: cookies.refreshToken,
               name: cookies.user,
             })
             .then(async (response) => {
-                console.log(response)
+              console.log(response);
               const data = response.data;
               setCookie("accessToken", data.idToken.jwtToken);
               setCookie("refreshToken", data.refreshToken.token);
@@ -149,18 +158,18 @@ export default function Page({ params }: { params: { slug: string } }) {
               toast.error("Failed to load game");
             });
         } else {
-            const data = await (response as Response).json();
-            setGameData(data);
-            setBoard(data.board);
-            if (
-                data.status === "winner" &&
-                data.currentPlayer === cookies.playerId
-            ) {
-                setConfetti(true);
-            } else {
-                setConfetti(false);
-            }
-            setIsLoaded(true);
+          const data = await (response as Response).json();
+          setGameData(data);
+          setBoard(data.board);
+          if (
+            data.status === "winner" &&
+            data.currentPlayer === cookies.playerId
+          ) {
+            setConfetti(true);
+          } else {
+            setConfetti(false);
+          }
+          setIsLoaded(true);
         }
       });
   };
@@ -169,8 +178,7 @@ export default function Page({ params }: { params: { slug: string } }) {
     if (gameData !== null) {
       getUserImageFromS3();
     }
-  }
-  , [gameData]);
+  }, [gameData]);
 
   const makeMove = async (row: number, column: number) => {
     const response = await axios
@@ -197,7 +205,6 @@ export default function Page({ params }: { params: { slug: string } }) {
       socket.emit("updateGame", params.slug);
     }
   };
-  
 
   const restartGame = async () => {
     const response = await axios
@@ -259,9 +266,9 @@ export default function Page({ params }: { params: { slug: string } }) {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {gameData.currentPlayer === gameData.player1pub
-                          ? "Player 1 (" + gameData.player1Name + ") has won!"
-                          : "Player 2 (" + gameData.player2Name + ") has won!"}
+                        {gameData.currentPlayer === cookies.playerId
+                          ? "Player 1 (" + cookies.user + ") has won!"
+                          : "Player 2 (" + (cookies.user === gameData.player1Name? gameData.player2Name: gameData.player1Name)+ ") has won!"}
                       </AlertDialogTitle>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
