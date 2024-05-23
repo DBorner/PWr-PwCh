@@ -6,6 +6,7 @@ import {
   GetCommand,
   DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 
 const client = new DynamoDBClient({});
 
@@ -25,7 +26,7 @@ export const handler = async (event, context) => {
     new ScanCommand({ TableName: tableName })
   );
 
-  const ranking = createRanking(gamesHistory.Items);
+  const ranking = await createRanking(gamesHistory.Items);
 
   await updateRankingInDB(ranking);
 
@@ -38,7 +39,7 @@ export const handler = async (event, context) => {
   };
 };
 
-const createRanking = (gamesHistory) => {
+const createRanking = async (gamesHistory) => {
   let ranking = {};
   gamesHistory.forEach((game) => {
     if (game.status === "winner") {
@@ -102,7 +103,30 @@ const createRanking = (gamesHistory) => {
       }
     }
   });
+  const rankingArray = Object.values(ranking);
+  rankingArray.sort((a, b) => b.score - a.score);
+  const oldRanking = await getCurrentRanking();
+  oldRanking.sort((a, b) => b.score - a.score);
+  //check if any player position has changed
+  if (oldRanking.length !== rankingArray.length) {
+    await sendNotification();
+  } else {
+    for (let i = 0; i < rankingArray.length; i++) {
+      if (oldRanking[i].player !== rankingArray[i].player) {
+        await sendNotification();
+        break;
+      }
+    }
+  }
   return ranking;
+};
+
+const getCurrentRanking = async () => {
+  const ranking = await dynamo.send(
+    new ScanCommand({ TableName: rankingTableName })
+  );
+  console.log(ranking.Items);
+  return ranking.Items;
 };
 
 const updateRankingInDB = async (ranking) => {
@@ -121,4 +145,16 @@ const updateRankingInDB = async (ranking) => {
     };
     await dynamo.send(new PutCommand(params));
   }
+};
+
+const sendNotification = async () => {
+  //send notification to all players using sns
+  const snsClient = new SNSClient({});
+  const message = "The ranking has been updated!";
+  const params = {
+    Message: message,
+    Subject: "Ranking Updated",
+    TopicArn: "arn:aws:sns:us-east-1:533267079357:TicTacToeRankingChange",
+  };
+  await snsClient.send(new PublishCommand(params));
 };
